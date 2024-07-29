@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Predictions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">NBA Betting Bot ({{date}})</h1>
+
+        <h3>({{model_dict[model]}})</h3>
+
+        <div class="model-selector">
+            <form action="{{ url_for('set_model') }}" method="post">
+                <label for="model">Select Model:</label>
+                <select id="model" name="model">
+                    <option value="logistic-regression">Logistic Regression</option>
+                    <option value="neural-network">Neural Network</option>
+                    <option value="random-forest">Random Forest</option>
+                    <option value="gradient-boosting-machine">Gradient Boosting Machine</option>
+                </select>
+                <button type="submit">Apply</button>
+            </form>
+        </div>
+
+        <div class="total-profit">
+            Total Profit: {{ total_profit }}
+        </div>
+        <div class="date-selector">
+            <form action="{{ url_for('set_date', model=model) }}" method="post">
+                <label for="date">Select Date:</label>
+                <input type="date" id="date" name="date" min="2023-10-24" max="2024-06-17" required>
+                <button type="submit">Get Predictions</button>
+            </form>
+        </div>
+
+        <div class="bets-section">
+            <h2>Bets</h2>
+            {% for bet in bets %}
+                <div class="bet {% if bet['Profit'][0] == '-' %}bet-negative{% else %}bet-positive{% endif %}">
+                    {{ bet['Team'] }}: {{ bet['Profit'] }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="bets-section">
+            <h2>Profit</h2>
+            <div class="bet {% if profit[0] == '-' %}bet-negative{% else %}bet-positive{% endif %}">{{ profit }}</div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-teams">Teams</th>
+                    <th class="col-moneylines">Moneylines</th>
+                    <th class="col-ev">EV</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for index, row in table.iterrows() %}
+                <tr>
+                    <td class="col-teams">{{row['HomeTeam']}}</td>
+                    <td class="col-moneylines">
+                        {{row['HomeMoneyLine']}}
+                        {% if row['HomeMoneyLine'] <= row['AwayMoneyLine'] %}
+                        <span class="{% if row['HomeWinProb']|float <= 50 %}ev-low-negative{% elif row['HomeWinProb']|float <= 60 %}ev-mid-negative{% elif row['HomeWinProb']|float <= 70 %}ev-positive{% elif row['HomeWinProb']|float <= 80 %}ev-high-positive{% else %}ev-very-high-positive{% endif %}":> ({{row['HomeWinProb']}}%)</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-ev {% if row['HomeEV']|float < -15 %}ev-low-negative{% elif row['HomeEV']|float < 0 %}ev-mid-negative{% elif row['HomeEV']|float < 15 %}ev-positive{% elif row['HomeEV']|float < 30 %}ev-high-positive{% else %}ev-very-high-positive{% endif %}">{{row['HomeEV']}}</td>
+                </tr>
+                <tr>
+                    <td class="col-teams">{{row['AwayTeam']}}</td>
+                    <td class="col-moneylines">
+                            {{row['AwayMoneyLine']}} 
+                        {% if row['HomeMoneyLine'] > row['AwayMoneyLine'] %}
+                            <span class="{% if row['AwayWinProb']|float <= 50 %}ev-low-negative{% elif row['AwayWinProb']|float <= 60 %}ev-mid-negative{% elif row['AwayWinProb']|float <= 70 %}ev-positive{% elif row['AwayWinProb']|float <= 80 %}ev-high-positive{% else %}ev-very-high-positive{% endif %}":> ({{row['AwayWinProb']}}%)</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-ev {% if row['AwayEV']|float < -15 %}ev-low-negative{% elif row['AwayEV']|float < 0 %}ev-mid-negative{% elif row['AwayEV']|float < 15 %}ev-positive{% elif row['AwayEV']|float < 30 %}ev-high-positive{% else %}ev-very-high-positive{% endif %}">{{row['AwayEV']}}</td>
+                </tr>
+                <tr class="spacer"></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
